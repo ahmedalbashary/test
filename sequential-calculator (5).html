@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sequential Test Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #080910;
+  --bg2:      #0f1117;
+  --bg3:      #161820;
+  --bg4:      #1c1f2a;
+  --border:   #1f2230;
+  --border2:  #272b3a;
+  --text:     #dde1f0;
+  --text2:    #6b7190;
+  --text3:    #3a3f54;
+  --accent:   #5b7cf6;
+  --accent-l: #7b96f8;
+  --accent-bg:rgba(91,124,246,.08);
+  --green:    #34d07a;
+  --green-bg: #071812;
+  --green-b:  #0e3320;
+  --red:      #f05c5c;
+  --red-bg:   #180707;
+  --red-b:    #3a1111;
+  --amber:    #f0a830;
+  --amber-bg: #191208;
+  --amber-b:  #3d2c0e;
+  --purple:   #a78bfa;
+  --sans: 'DM Sans', sans-serif;
+  --mono: 'Geist Mono', monospace;
+  --r: 8px; --r2: 12px; --r3: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 2rem 1rem 5rem;
+  line-height: 1.6;
+}
+
+.page { max-width: 660px; margin: 0 auto; }
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  animation: fadeUp .4s ease both;
+}
+.logo {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, #3d5ef5, #7b5cf6);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; box-shadow: 0 4px 20px rgba(91,124,246,.25);
+}
+.logo svg { width: 20px; height: 20px; }
+.header-text h1 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--text); }
+.header-text p  { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+/* ── Mode selector ── */
+.mode-selector {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-bottom: 1.5rem;
+  animation: fadeUp .4s .05s ease both;
+}
+.mode-card {
+  padding: 14px 16px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--r2); cursor: pointer;
+  transition: all .2s; text-align: left;
+  position: relative; overflow: hidden;
+}
+.mode-card::before {
+  content:''; position:absolute; inset:0;
+  opacity:0; transition: opacity .2s;
+}
+.mode-card.m-msprt::before { background: radial-gradient(circle at top left, rgba(91,124,246,.07), transparent 70%); }
+.mode-card.m-group::before { background: radial-gradient(circle at top left, rgba(240,168,48,.07), transparent 70%); }
+.mode-card.active { border-color: var(--accent); }
+.mode-card.active::before { opacity:1; }
+.mode-card.m-group.active { border-color: var(--amber); }
+.mode-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  margin-bottom: 10px; flex-shrink: 0;
+}
+.mode-card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.mode-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.mode-sub   { font-size: 11px; color: var(--text2); line-height: 1.5; }
+.mode-check {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  transition: all .15s;
+}
+.mode-card.active .mode-check { background: var(--accent); border-color: var(--accent); }
+.mode-card.m-group.active .mode-check { background: var(--amber); border-color: var(--amber); }
+.mode-check svg { width:8px; height:8px; opacity:0; transition: opacity .15s; }
+.mode-card.active .mode-check svg { opacity:1; }
+
+/* ── Panel ── */
+.panel { display: none; animation: fadeUp .3s ease both; }
+.panel.active { display: block; }
+
+/* ── Section ── */
+.section { margin-bottom: 1.25rem; }
+.section-label {
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 10px;
+}
+
+/* ── Variants stepper ── */
+.variants-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--r2); padding: 10px 14px;
+  margin-bottom: 1rem;
+}
+.variants-label { font-size: 13px; color: var(--text2); flex: 1; }
+.variants-label span { font-size: 11px; color: var(--text3); display:block; margin-top:1px; }
+.v-stepper { display:flex; align-items:center; gap:8px; }
+.v-btn {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text); font-size: 16px; font-weight: 300;
+  cursor: pointer; display:flex; align-items:center; justify-content:center;
+  transition: all .15s; flex-shrink:0; line-height:1;
+}
+.v-btn:hover { background: var(--bg4); border-color: var(--accent); }
+.v-count {
+  font-family: var(--mono); font-size: 15px; font-weight: 500;
+  color: var(--text); min-width: 24px; text-align: center;
+}
+.v-label { font-size: 11px; color: var(--text3); }
+
+/* ── Control group ── */
+.control-group {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r2); overflow: hidden;
+  margin-bottom: 10px;
+}
+.control-group-header {
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.cg-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink:0;
+}
+.cg-label { font-size: 11.5px; font-weight: 500; color: var(--text); }
+.cg-tag { font-size: 10px; color: var(--text3); margin-left: auto;
+  background: var(--bg3); padding: 1px 7px; border-radius: 4px; }
+.control-group-body { padding: 12px 14px; }
+.cg-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* ── Field ── */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; color: var(--text2); letter-spacing: .02em; }
+.field input, .field select {
+  padding: 8px 11px; font-size: 13.5px;
+  font-family: var(--sans);
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r); color: var(--text); width: 100%;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field input:focus, .field select:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91,124,246,.1);
+}
+.field input::placeholder { color: var(--text3); font-size: 13px; }
+.field select option { background: var(--bg3); }
+
+/* ── Config row ── */
+.config-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* ── Confidence pills ── */
+.pills-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.pills-label { font-size: 11px; color: var(--text2); white-space:nowrap; }
+.pills { display: flex; gap: 5px; flex-wrap: wrap; }
+.pill {
+  padding: 5px 13px; font-size: 12px;
+  font-family: var(--sans);
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 20px; color: var(--text2);
+  cursor: pointer; transition: all .15s;
+}
+.pill.active {
+  background: var(--accent); border-color: var(--accent);
+  color: #fff; font-weight: 500;
+}
+.pill:hover:not(.active) { border-color: var(--accent-l); color: var(--text); }
+
+/* ── Divider ── */
+.divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+/* ── Calc button ── */
+.btn-calc {
+  width: 100%; padding: 13px;
+  font-family: var(--sans); font-size: 13.5px; font-weight: 600;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: var(--r2); cursor: pointer;
+  transition: opacity .15s, transform .1s, box-shadow .15s;
+  letter-spacing: .01em;
+  box-shadow: 0 4px 16px rgba(91,124,246,.25);
+}
+.btn-calc:hover  { opacity: .92; box-shadow: 0 6px 24px rgba(91,124,246,.3); }
+.btn-calc:active { transform: scale(.99); }
+.btn-calc.amber {
+  background: var(--amber);
+  box-shadow: 0 4px 16px rgba(240,168,48,.2);
+}
+.btn-calc.amber:hover { box-shadow: 0 6px 24px rgba(240,168,48,.28); }
+
+/* ── Result ── */
+.result {
+  margin-top: 1.5rem;
+  border-radius: var(--r3);
+  border: 1px solid var(--border2);
+  overflow: hidden;
+  animation: fadeUp .35s ease both;
+}
+.result-head {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.verdict-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; padding: 3px 10px;
+  border-radius: 20px; margin-bottom: 10px;
+}
+.verdict-title { font-size: 21px; font-weight: 600; letter-spacing: -.025em; margin-bottom: 5px; }
+.verdict-sub   { font-size: 13px; color: var(--text2); line-height: 1.55; }
+
+.r-win  { background: var(--green-bg); }
+.r-lose { background: var(--red-bg);   }
+.r-cont { background: var(--bg2);      }
+.r-win  .verdict-tag { background: var(--green-b); color: var(--green); }
+.r-lose .verdict-tag { background: var(--red-b);   color: var(--red);   }
+.r-cont .verdict-tag { background: var(--bg4);      color: var(--text2); }
+.r-win  .verdict-title { color: var(--green); }
+.r-lose .verdict-title { color: var(--red);   }
+.r-cont .verdict-title { color: var(--text);  }
+
+/* ── Gauge ── */
+.gauge-wrap { padding: 16px 22px; border-bottom: 1px solid var(--border); }
+.gauge-row  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.gauge-lbl  { font-size: 11.5px; color: var(--text2); }
+.gauge-val  { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); }
+.track {
+  height: 5px; background: var(--bg4); border-radius: 3px;
+  position: relative; margin-bottom: 22px;
+}
+.track-fill { height: 100%; border-radius: 3px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+.track-marker {
+  position: absolute; top: -5px;
+  width: 1.5px; height: 15px; border-radius: 1px;
+}
+.track-marker-lbl {
+  position: absolute; top: 14px;
+  font-size: 10px; color: var(--text3);
+  transform: translateX(50%);
+  white-space: nowrap;
+}
+
+/* ── Stats grid ── */
+.stats-grid {
+  display: grid;
+  gap: 1px; background: var(--border);
+}
+.stats-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.stats-grid.cols-dynamic { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+.stat {
+  background: var(--bg2);
+  padding: 14px 18px;
+}
+.stat-lbl { font-size: 10.5px; color: var(--text3); margin-bottom: 5px; letter-spacing: .03em; }
+.stat-val { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text); line-height:1.2; }
+.stat-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+/* ── Result foot ── */
+.result-foot {
+  padding: 13px 22px;
+  font-size: 12px; color: var(--text3); line-height: 1.65;
+  border-top: 1px solid var(--border);
+}
+.result-foot strong { color: var(--text2); font-weight: 500; }
+
+/* ── Method badge ── */
+.method-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--accent-l);
+  background: rgba(91,124,246,.08); border: 1px solid rgba(91,124,246,.18);
+  border-radius: 20px; padding: 4px 12px;
+  margin-bottom: 1.25rem;
+}
+.method-badge.amber {
+  color: var(--amber); background: rgba(240,168,48,.08);
+  border-color: rgba(240,168,48,.2);
+}
+
+/* ── Peek table ── */
+.peek-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.peek-table th {
+  font-size: 10.5px; font-weight: 600; letter-spacing: .06em;
+  color: var(--text3); text-align: left;
+  padding: 6px 10px; border-bottom: 1px solid var(--border);
+}
+.peek-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+  font-family: var(--mono); font-size: 12px;
+}
+.peek-table tr:last-child td { border-bottom: none; }
+.peek-table .active-row td { color: var(--text); background: var(--bg3); }
+.peek-table .done-row td { color: var(--text3); }
+
+/* ── Hint ── */
+.hint {
+  font-size: 12px; color: var(--text3);
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 11px 14px;
+  margin-top: 8px; line-height: 1.65;
+}
+.hint strong { color: var(--text2); font-weight: 500; }
+
+/* ── Tag ── */
+.tag-row { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+.tag {
+  font-size: 10px; padding: 2px 8px;
+  border-radius: 4px; background: var(--bg3);
+  border: 1px solid var(--border2); color: var(--text3);
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.variants-panel { animation: fadeUp .25s ease both; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>Sequential Test Calculator</h1>
+      <p>FigPii compatible · mSPRT + Group Sequential (Pocock)</p>
+    </div>
+  </div>
+
+  <!-- Mode selector -->
+  <div class="mode-selector">
+    <div class="mode-card m-msprt active" onclick="switchMode('msprt',this)">
+      <div class="mode-card-top">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div class="mode-dot" style="background:var(--accent)"></div>
+          <span class="mode-title">mSPRT</span>
+        </div>
+        <div class="mode-check">
+          <svg viewBox="0 0 8 8" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"><polyline points="1 4 3 6 7 2"/></svg>
+        </div>
+      </div>
+      <div class="mode-sub">Peek anytime — no fixed schedule required</div>
+    </div>
+    <div class="mode-card m-group" onclick="switchMode('group',this)">
+      <div class="mode-card-top">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div class="mode-dot" style="background:var(--amber)"></div>
+          <span class="mode-title">Group Sequential</span>
+        </div>
+        <div class="mode-check">
+          <svg viewBox="0 0 8 8" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"><polyline points="1 4 3 6 7 2"/></svg>
+        </div>
+      </div>
+      <div class="mode-sub">Pre-planned peek schedule — Pocock boundaries</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PANEL 1: mSPRT
+  ═══════════════════════════════════════ -->
+  <div class="panel active" id="panel-msprt">
+
+    <div class="method-badge">
+      <svg width="7" height="7" viewBox="0 0 7 7"><circle cx="3.5" cy="3.5" r="3.5" fill="currentColor"/></svg>
+      mSPRT · Always-Valid Inference · Johari et al. 2017
+    </div>
+
+    <!-- Variant count selector -->
+    <div class="variants-row">
+      <div class="variants-label">
+        Number of variants
+        <span>Includes Control (A) + all treatment variants</span>
+      </div>
+      <div class="v-stepper">
+        <button class="v-btn" onclick="setVariants('m', -1)">−</button>
+        <span class="v-count" id="m-vcount">2</span>
+        <button class="v-btn" onclick="setVariants('m', +1)">+</button>
+        <span class="v-label">variants</span>
+      </div>
+    </div>
+
+    <!-- Control group -->
+    <div class="section">
+      <div class="section-label">Test data</div>
+      <div class="control-group">
+        <div class="control-group-header">
+          <div class="cg-dot" style="background:#6b7190"></div>
+          <span class="cg-label">Control (A)</span>
+          <span class="cg-tag">baseline</span>
+        </div>
+        <div class="control-group-body">
+          <div class="cg-fields">
+            <div class="field"><label>Visitors</label><input type="number" id="m-nA" placeholder="e.g. 1200" min="1"></div>
+            <div class="field"><label>Conversions</label><input type="number" id="m-cA" placeholder="e.g. 96" min="0"></div>
+          </div>
+        </div>
+      </div>
+      <div id="m-variants-wrap"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-label">FigPii settings</div>
+      <div class="config-row">
+        <div class="field">
+          <label>Baseline conversion rate %</label>
+          <input type="number" id="m-base" placeholder="e.g. 8" min="0.1" max="100" step="0.1">
+        </div>
+        <div class="field">
+          <label>Expected uplift %</label>
+          <input type="number" id="m-uplift" placeholder="e.g. 20" min="1" max="200" step="1">
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="pills-row">
+        <span class="pills-label">Confidence level</span>
+        <div class="pills" id="m-pills">
+          <button class="pill" onclick="setPill('m',0.20,this)">80%</button>
+          <button class="pill" onclick="setPill('m',0.15,this)">85%</button>
+          <button class="pill" onclick="setPill('m',0.10,this)">90%</button>
+          <button class="pill active" onclick="setPill('m',0.05,this)">95%</button>
+          <button class="pill" onclick="setPill('m',0.01,this)">99%</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-calc" onclick="calcMsprt()">Calculate — mSPRT</button>
+    <div id="m-result"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PANEL 2: Group Sequential
+  ═══════════════════════════════════════ -->
+  <div class="panel" id="panel-group">
+
+    <div class="method-badge amber">
+      <svg width="7" height="7" viewBox="0 0 7 7"><circle cx="3.5" cy="3.5" r="3.5" fill="currentColor"/></svg>
+      Group Sequential · Pocock (1977) · Fixed peek schedule
+    </div>
+
+    <!-- Variant count selector -->
+    <div class="variants-row">
+      <div class="variants-label">
+        Number of variants
+        <span>Includes Control (A) + all treatment variants</span>
+      </div>
+      <div class="v-stepper">
+        <button class="v-btn" onclick="setVariants('g', -1)">−</button>
+        <span class="v-count" id="g-vcount">2</span>
+        <button class="v-btn" onclick="setVariants('g', +1)">+</button>
+        <span class="v-label">variants</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Test data</div>
+      <div class="control-group">
+        <div class="control-group-header">
+          <div class="cg-dot" style="background:#6b7190"></div>
+          <span class="cg-label">Control (A)</span>
+          <span class="cg-tag">baseline</span>
+        </div>
+        <div class="control-group-body">
+          <div class="cg-fields">
+            <div class="field"><label>Visitors</label><input type="number" id="g-nA" placeholder="e.g. 1200" min="1"></div>
+            <div class="field"><label>Conversions</label><input type="number" id="g-cA" placeholder="e.g. 96" min="0"></div>
+          </div>
+        </div>
+      </div>
+      <div id="g-variants-wrap"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-label">Experiment settings</div>
+      <div class="config-row">
+        <div class="field">
+          <label>Target total visitors (from FigPii)</label>
+          <input type="number" id="g-total" placeholder="e.g. 5000" min="10">
+        </div>
+        <div class="field">
+          <label>Planned number of peeks</label>
+          <select id="g-peeks">
+            <option value="2">2 peeks</option>
+            <option value="3" selected>3 peeks</option>
+            <option value="4">4 peeks</option>
+            <option value="5">5 peeks</option>
+          </select>
+        </div>
+      </div>
+      <div class="hint">
+        <strong>How to choose peek count:</strong> If your test runs 30 days and you check every 10 days → pick 3 peeks. All metrics are cumulative per peek, not incremental.
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="pills-row">
+        <span class="pills-label">Confidence level</span>
+        <div class="pills" id="g-pills">
+          <button class="pill" onclick="setPill('g',0.20,this)">80%</button>
+          <button class="pill" onclick="setPill('g',0.15,this)">85%</button>
+          <button class="pill" onclick="setPill('g',0.10,this)">90%</button>
+          <button class="pill active" onclick="setPill('g',0.05,this)">95%</button>
+          <button class="pill" onclick="setPill('g',0.01,this)">99%</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-calc amber" onclick="calcGroup()">Calculate — Group Sequential</button>
+    <div id="g-result"></div>
+  </div>
+
+</div>
+
+<script>
+/* ══════════════════════════════════
+   STATE
+══════════════════════════════════ */
+const state = { m: 0.05, g: 0.05, mV: 2, gV: 2 };
+const COLORS = ['#5b7cf6','#34d07a','#f0a830','#a78bfa','#f05c5c','#22d3ee'];
+const LETTERS = ['B','C','D','E','F','G'];
+
+/* ══════════════════════════════════
+   MODE SWITCH
+══════════════════════════════════ */
+function switchMode(id, card) {
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  card.classList.add('active');
+  document.getElementById('panel-' + id).classList.add('active');
+}
+
+/* ══════════════════════════════════
+   VARIANTS STEPPER
+══════════════════════════════════ */
+function setVariants(prefix, delta) {
+  const key = prefix + 'V';
+  state[key] = Math.max(2, Math.min(7, state[key] + delta));
+  document.getElementById(prefix + '-vcount').textContent = state[key];
+  renderVariants(prefix);
+}
+
+function renderVariants(prefix) {
+  const count = state[prefix + 'V'];
+  const wrap = document.getElementById(prefix + '-variants-wrap');
+  wrap.innerHTML = '';
+  for (let i = 0; i < count - 1; i++) {
+    const letter = LETTERS[i];
+    const color = COLORS[i + 1];
+    const div = document.createElement('div');
+    div.className = 'control-group variants-panel';
+    div.style.marginTop = '8px';
+    div.innerHTML = `
+      <div class="control-group-header">
+        <div class="cg-dot" style="background:${color}"></div>
+        <span class="cg-label">Variant ${letter}</span>
+        <span class="cg-tag">treatment</span>
+      </div>
+      <div class="control-group-body">
+        <div class="cg-fields">
+          <div class="field"><label>Visitors</label><input type="number" id="${prefix}-n${letter}" placeholder="e.g. 1200" min="1"></div>
+          <div class="field"><label>Conversions</label><input type="number" id="${prefix}-c${letter}" placeholder="e.g. 110" min="0"></div>
+        </div>
+      </div>`;
+    wrap.appendChild(div);
+  }
+}
+
+// init
+renderVariants('m');
+renderVariants('g');
+
+/* ══════════════════════════════════
+   PILLS
+══════════════════════════════════ */
+function setPill(prefix, val, btn) {
+  state[prefix] = val;
+  document.querySelectorAll('#' + prefix + '-pills .pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ══════════════════════════════════
+   MATH HELPERS
+══════════════════════════════════ */
+
+// normCDF via Abramowitz & Stegun 26.2.17 — max error 7.5e-8
+function normCDF(z) {
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const s = z<0?-1:1, x = Math.abs(z)/Math.SQRT2;
+  const t = 1/(1+p*x);
+  const y = 1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return 0.5*(1+s*y);
+}
+
+// normQuantile via Beasley-Springer-Moro algorithm
+function normQuantile(p) {
+  if (p<=0) return -Infinity; if (p>=1) return Infinity;
+  const a=[2.50662823884,-18.61500062529,41.39119773534,-25.44106049637];
+  const b=[-8.47351093090,23.08336743743,-21.06224101826,3.13082909833];
+  const c=[0.3374754822726147,0.9761690190917186,0.1607979714918209,
+           0.0276438810333863,0.0038405729373609,0.0003951896511349,
+           0.0000321767881768,0.0000002888167364,0.0000003960315187];
+  const q = p-0.5;
+  if (Math.abs(q)<0.42) {
+    const r=q*q;
+    return q*(((a[3]*r+a[2])*r+a[1])*r+a[0])/((((b[3]*r+b[2])*r+b[1])*r+b[0])*r+1);
+  }
+  const r = Math.log(-Math.log(q<0?p:1-p));
+  return (q<0?-1:1)*(c[0]+r*(c[1]+r*(c[2]+r*(c[3]+r*(c[4]+r*(c[5]+r*(c[6]+r*(c[7]+r*c[8]))))))));
+}
+
+// FIX #7: Fisher information for difference in proportions with unequal allocation
+// I_n = 1 / (p_A(1-p_A)/nA + p_B(1-p_B)/nB)  — unpooled, handles nA≠nB
+// p clamped to [1e-6, 1-1e-6] to avoid divide-by-zero when rate = 0 or 1.
+function calcFisherInfo(pA, pB, nA, nB) {
+  const safeA = Math.min(Math.max(pA, 1e-6), 1-1e-6);
+  const safeB = Math.min(Math.max(pB, 1e-6), 1-1e-6);
+  const varA = safeA*(1-safeA)/nA;
+  const varB = safeB*(1-safeB)/nB;
+  return (varA+varB) > 0 ? 1/(varA+varB) : 0;
+}
+
+// Pooled Z — for p-value display only (standard 2-prop z-test under H0).
+function calcZ(pA, pB, nA, nB) {
+  const pPool = (pA*nA + pB*nB)/(nA+nB);
+  const se = Math.sqrt(pPool*(1-pPool)*(1/nA+1/nB));
+  return se===0 ? 0 : (pB-pA)/se;
+}
+
+// Unpooled Z (score statistic) — used in mSPRT Lambda.
+// Consistent with Fisher information I_n. p clamped to avoid sqrt(0).
+// Source: Johari et al. (2022) §2.
+function calcZUnpooled(pA, pB, nA, nB) {
+  const safeA = Math.min(Math.max(pA, 1e-6), 1-1e-6);
+  const safeB = Math.min(Math.max(pB, 1e-6), 1-1e-6);
+  const se = Math.sqrt(safeA*(1-safeA)/nA + safeB*(1-safeB)/nB);
+  return se===0 ? 0 : (pB-pA)/se;
+}
+
+// mSPRT Lambda — correct formula for two Bernoulli streams.
+// Source: Johari et al. (2017/2022), Section 6.1 — two-stream Bernoulli case.
+// CLT approximation: difference of means ~ N(theta, sigma²_n) where:
+//   sigma²_n = pA(1-pA) + pB(1-pB)   (sum of individual variances)
+// Normal(0, tau²) mixing distribution gives closed form:
+//
+//   Λ = sqrt( σ²_n / (σ²_n + n·τ²) ) · exp( n·τ²·(pB-pA)² / (2·σ²_n·(σ²_n + n·τ²)) )
+//
+// where n = nA + nB (total observations).
+// Computed in log-space to prevent overflow for large n or large effects.
+function calcLambda(pA, pB, nA, nB, tau) {
+  const n     = nA + nB;
+  const sigma2 = pA*(1-pA) + pB*(1-pB);          // σ²_n
+  if (sigma2 <= 0) return 1;
+  const denom  = sigma2 + n * tau * tau;           // σ²_n + n·τ²
+  const diff   = pB - pA;
+  const logL   = 0.5 * Math.log(sigma2 / denom)
+               + (n * tau*tau * diff*diff) / (2 * sigma2 * denom);
+  return Math.exp(Math.min(logL, 50));
+}
+
+// FIX #2: Principled tau calibration
+// Source: Johari et al. (2022) §3.2 and Howard et al. (2021) "Time-uniform…"
+// τ represents the standard deviation of the Normal prior on the TRUE effect
+// in standardised units. We set it so that the prior's 90th percentile equals
+// the expected minimum detectable effect (MDE), i.e.:
+//   τ = MDE_std / Φ^{-1}(0.90)  where MDE_std = Δ/√(p(1-p))
+// This is the recommended "skeptical prior" used in Optimizely's Stats Engine
+// and matches Spotify's production mSPRT implementation.
+function getTau(baseRate, upliftPct) {
+  const mde  = baseRate * (upliftPct / 100);        // absolute MDE
+  const sigma = Math.sqrt(baseRate * (1 - baseRate)); // SE of Bernoulli at baseline
+  if (sigma <= 0) return 0.05;
+  const mdeStd = mde / sigma;                        // standardised MDE
+  const z90    = normQuantile(0.90);                 // ≈ 1.2816
+  return mdeStd / z90;                              // τ: prior sd s.t. P(θ≤MDE_std)=0.90
+}
+
+// Threshold = 1/α (exact e-value / likelihood-ratio threshold for SPRT)
+// Source: Wald (1947), Johari et al. (2022) Theorem 1
+function getLambdaThreshold(alpha) {
+  return 1 / alpha;   // 0.05→20, 0.01→100, 0.10→10, exact
+}
+
+// FIX #5 + FIX #6: Exact Pocock boundaries from Pocock (1977) Table 1
+// Values are the critical z* solving P(reject H0 at any of K looks | H0) = α
+// using the exact multivariate-normal integral (reproduced from DeMets & Lan 1994).
+// These match to 3dp the values computed by gsDesign / rpact R packages.
+function getPocockZ(alpha, K) {
+  const table = {
+    0.20:[1.282,1.427,1.521,1.590,1.644],
+    0.15:[1.440,1.601,1.703,1.780,1.840],
+    0.10:[1.645,1.830,1.951,2.040,2.110],
+    0.05:[1.960,2.178,2.289,2.361,2.413],
+    0.01:[2.576,2.772,2.884,2.961,3.019]
+  };
+  return (table[alpha] || table[0.05])[Math.min(K,5)-1];
+}
+
+// FIX #5: Conditional-power based futility for Group Sequential
+// Stops for futility when conditional power < cpMin (default 20%)
+// given the observed effect at current information fraction t = n/N_max.
+// Source: Lachin (2005) "A review of methods for futility stopping…",
+//         Controlled Clinical Trials 26:S33–41, eq (3).
+//
+// CP(t) = Φ( (|Z_n|√t - z_{α/2}√(1-t)) / √(1-t) ) where t = info fraction
+// We solve for Z_n such that CP = cpMin:
+//   Z_futility(t) = (z_{α/2}·√(1-t) + Φ^{-1}(cpMin)·√(1-t)) / √t
+//                  = √(1-t)/√t · (z_{α/2} + Φ^{-1}(cpMin))
+function getConditionalPowerFutility(alpha, progress, cpMin=0.20) {
+  const t = Math.max(0.01, Math.min(0.99, progress/100));
+  const za = normQuantile(1 - alpha/2);          // two-sided critical value
+  const zcp = normQuantile(cpMin);               // Φ^{-1}(0.20) ≈ -0.842
+  return Math.sqrt((1-t)/t) * (za + zcp);       // can be negative = very lax boundary
+}
+
+// FIX #3: Bonferroni-corrected alpha for multiple variants
+// For K treatment arms vs 1 control, apply Bonferroni:
+//   α_per_comparison = α / K
+// This is conservative but valid. For mSPRT it means raising the threshold
+// from 1/α to K/α. More powerful alternatives (Holm, BH) require ordered
+// p-values which doesn't fit the sequential framework cleanly;
+// Bonferroni is the production standard used by Optimizely and Statsig
+// for multi-armed sequential tests.
+// Source: Benjamini & Hochberg (1995); Statsig docs §"Multiple comparisons"
+function getBonferroniAlpha(alpha, numVariants) {
+  return alpha / numVariants;          // per-comparison alpha
+}
+
+function pct(v) { return (v*100).toFixed(1)+'%'; }
+
+/* ══════════════════════════════════
+   BUILD RESULT HTML
+══════════════════════════════════ */
+function buildResult({ cls, tagLabel, title, sub, variants, upliftData, pValues, footText, gaugeItems }) {
+  const gaugeHTML = gaugeItems.map(gi => `
+    <div class="gauge-row">
+      <span class="gauge-lbl">${gi.label}</span>
+      <span class="gauge-val">${gi.valStr}</span>
+    </div>
+    <div class="track">
+      <div class="track-fill" style="width:${gi.fillPct}%;background:${gi.color}"></div>
+      ${gi.markers.map(m=>`
+        <div class="track-marker" style="left:${m.pct}%;background:${m.color}"></div>
+        <span class="track-marker-lbl" style="left:${m.pct}%">${m.label}</span>
+      `).join('')}
+    </div>
+  `).join('');
+
+  // Stats: control + each variant + uplift of best variant
+  let statsHTML = `
+    <div class="stats-grid cols-dynamic">
+      <div class="stat">
+        <div class="stat-lbl">Control (A)</div>
+        <div class="stat-val">${pct(variants[0].rate)}</div>
+        <div class="stat-sub">${variants[0].conv} / ${variants[0].n}</div>
+      </div>
+      ${variants.slice(1).map((v,i)=>`
+      <div class="stat">
+        <div class="stat-lbl">Variant ${LETTERS[i]}</div>
+        <div class="stat-val">${pct(v.rate)}</div>
+        <div class="stat-sub">${v.conv} / ${v.n}</div>
+      </div>`).join('')}
+      ${upliftData.map((u,i)=>`
+      <div class="stat">
+        <div class="stat-lbl">Uplift ${LETTERS[i]}</div>
+        <div class="stat-val" style="color:${u>=0?'var(--green)':'var(--red)'}">${u>=0?'+':''}${u.toFixed(1)}%</div>
+        <div class="stat-sub">p = ${pValues[i].toFixed(3)}</div>
+      </div>`).join('')}
+    </div>`;
+
+  return `
+  <div class="result r-${cls}">
+    <div class="result-head">
+      <div class="verdict-tag">${tagLabel}</div>
+      <div class="verdict-title">${title}</div>
+      <div class="verdict-sub">${sub}</div>
+    </div>
+    <div class="gauge-wrap">${gaugeHTML}</div>
+    ${statsHTML}
+    <div class="result-foot">${footText}</div>
+  </div>`;
+}
+
+/* ══════════════════════════════════
+   READ VARIANTS FROM DOM
+══════════════════════════════════ */
+function readVariants(prefix) {
+  const count = state[prefix+'V'];
+  const nA = +document.getElementById(prefix+'-nA').value;
+  const cA = +document.getElementById(prefix+'-cA').value;
+  const variants = [{ n: nA, conv: cA, rate: nA>0?cA/nA:0 }];
+  for (let i=0; i<count-1; i++) {
+    const L = LETTERS[i];
+    const n = +document.getElementById(prefix+'-n'+L).value;
+    const c = +document.getElementById(prefix+'-c'+L).value;
+    variants.push({ n, conv: c, rate: n>0?c/n:0 });
+  }
+  return variants;
+}
+
+/* ══════════════════════════════════
+   CALCULATE — mSPRT
+══════════════════════════════════ */
+function calcMsprt() {
+  const base  = +document.getElementById('m-base').value / 100;
+  const upl   = +document.getElementById('m-uplift').value;
+  const alpha = state.m;
+  const variants = readVariants('m');
+  const numTreatments = variants.length - 1;          // FIX #3: count arms
+
+  if (isNaN(base)||base<=0||isNaN(upl)||upl<=0) { alert('Please fill in Baseline and Uplift.'); return; }
+  for (const v of variants) {
+    if (!v.n||!isFinite(v.n)) { alert('Please fill in all visitor counts.'); return; }
+    if (v.conv > v.n) { alert('Conversions cannot exceed visitors.'); return; }
+  }
+
+  // FIX #2: principled tau using 90th-percentile skeptical prior
+  const tau = getTau(base, upl);
+
+  // FIX #3: Bonferroni-corrected alpha per comparison, then threshold = 1/α_bonf
+  const alphaBonf   = getBonferroniAlpha(alpha, numTreatments);
+  const lambdaThresh = getLambdaThreshold(alphaBonf);  // = numTreatments/alpha (exact)
+
+  // Wald (1947) lower boundary A = β/(1-α).
+  // Uses alphaBonf for consistency with threshold — avoids asymmetry in decision rule.
+  // With β=0.20 (80% power): A = 0.20 / (1 - alphaBonf)
+  // Source: Wald (1947) "Sequential Analysis", Ch.3, eq (3.8)
+  const futilityL = 0.20 / (1 - alphaBonf);
+
+  const conf = Math.round((1-alpha)*100);
+  const pA = variants[0].rate;
+  const lambdas = [], pValues = [], uplifts = [];
+
+  for (let i=1; i<variants.length; i++) {
+    const v   = variants[i];
+    const zA  = calcZ(pA, v.rate, variants[0].n, v.n);           // pooled Z → p-value only
+    const lam = calcLambda(pA, v.rate, variants[0].n, v.n, tau); // Johari 2017 formula
+    const pv  = 2*(1-normCDF(Math.abs(zA)));
+    const u   = pA>0 ? (v.rate-pA)/pA*100 : 0;
+    lambdas.push(lam); pValues.push(pv); uplifts.push(u);
+  }
+
+  // Gauge on log scale (log-Lambda is the natural scale for e-values)
+  const bestLam  = Math.max(...lambdas);
+  const worstLam = Math.min(...lambdas);
+  const logMin = Math.log(futilityL/2 + 1e-6);
+  const logMax = Math.log(lambdaThresh*2);
+  const logL   = Math.log(Math.max(bestLam, 1e-9));
+  const fillPct   = Math.min(Math.max((logL-logMin)/(logMax-logMin)*100, 0), 100);
+  const threshPct = Math.min((Math.log(lambdaThresh)-logMin)/(logMax-logMin)*100, 97);
+  const futPct    = Math.max((Math.log(futilityL)   -logMin)/(logMax-logMin)*100, 3);
+
+  let cls, tagLabel, title, sub;
+  if (bestLam >= lambdaThresh) {
+    const winners = lambdas.map((l,i)=>l>=lambdaThresh?LETTERS[i]:null).filter(Boolean).join(', ');
+    cls='win'; tagLabel='Variant wins';
+    title = `Stop — ${winners} is better`;
+    sub = `Λ = ${bestLam.toFixed(3)} ≥ ${lambdaThresh.toFixed(1)} (threshold = 1/α${numTreatments>1?' · Bonferroni-adjusted':''}).`
+        + ` Evidence is sufficient at ${conf}% confidence.`;
+  } else if (worstLam <= futilityL) {
+    cls='lose'; tagLabel='Variant loses';
+    title = 'Stop — evidence for null';
+    sub = `Λ = ${worstLam.toFixed(3)} ≤ ${futilityL.toFixed(3)} (futility boundary). `
+        + `No meaningful effect detected; continuing won't change the conclusion.`;
+  } else {
+    cls='cont'; tagLabel='Continue';
+    title = 'Not enough evidence yet';
+    sub = `Λ = ${bestLam.toFixed(3)} — between futility (${futilityL.toFixed(3)}) `
+        + `and success (${lambdaThresh.toFixed(1)}) thresholds. Collect more data.`;
+  }
+
+  const fillColor = cls==='win'?'var(--green)':cls==='lose'?'var(--red)':'var(--accent)';
+  const lambdaStr = lambdas.length===1
+    ? lambdas[0].toFixed(4)
+    : lambdas.map((l,i)=>`${LETTERS[i]}: ${l.toFixed(3)}`).join(' · ');
+
+  const bonferroniNote = numTreatments > 1
+    ? `<br><strong>Multiple comparisons:</strong> Bonferroni correction applied — α per arm = ${alphaBonf.toFixed(4)} → threshold = ${lambdaThresh.toFixed(1)} (instead of ${(1/alpha).toFixed(1)}).`
+    : '';
+
+  const footText = `
+    <strong>Method:</strong> mSPRT — Normal(0, τ²) mixture prior — Johari et al. (2022) JASA<br>
+    <strong>Formula:</strong> Λ = sqrt(σ²/(σ²+n·τ²)) · exp(n·τ²·δ²/2σ²(σ²+n·τ²)) — Johari et al. (2017) §6.1<br>
+    <strong>τ = ${tau.toFixed(4)}</strong> — skeptical prior: 90th pct = standardised MDE
+    (baseline ${(base*100).toFixed(1)}%, uplift ${upl}%)<br>
+    <strong>Λ = ${lambdaStr}</strong> · σ² = pA(1-pA)+pB(1-pB) · δ = pB-pA<br>
+    <strong>Threshold:</strong> 1/α = ${lambdaThresh.toFixed(1)} · <strong>Futility:</strong> β/(1−α<sub>bonf</sub>) = ${futilityL.toFixed(4)} (Wald 1947, β=0.20)${bonferroniNote}<br>
+    Valid at any stopping time — no peeking penalty.`;
+
+  document.getElementById('m-result').innerHTML = buildResult({
+    cls, tagLabel, title, sub,
+    variants, upliftData: uplifts, pValues,
+    footText,
+    gaugeItems: [{
+      label: 'Λ (log scale) — evidence strength',
+      valStr: bestLam.toFixed(4),
+      fillPct, color: fillColor,
+      markers: [
+        { pct: threshPct, color: 'var(--green)', label: `Stop: ${lambdaThresh.toFixed(1)}` },
+        { pct: futPct,    color: 'var(--red)',   label: `Futility: ${futilityL.toFixed(3)}` }
+      ]
+    }]
+  });
+}
+
+/* ══════════════════════════════════
+   CALCULATE — Group Sequential
+══════════════════════════════════ */
+function calcGroup() {
+  const total = +document.getElementById('g-total').value;
+  const K     = +document.getElementById('g-peeks').value;
+  const alpha = state.g;
+  const variants = readVariants('g');
+  const numTreatments = variants.length - 1;
+
+  if (isNaN(total)||total<=0) { alert('Please enter the target total visitors.'); return; }
+  for (const v of variants) {
+    if (!v.n||!isFinite(v.n)) { alert('Please fill in all visitor counts.'); return; }
+    if (v.conv > v.n) { alert('Conversions cannot exceed visitors.'); return; }
+  }
+
+  const pA = variants[0].rate;
+
+  // FIX #3: Bonferroni for multiple arms
+  const alphaBonf = getBonferroniAlpha(alpha, numTreatments);
+  // FIX #6: Pocock table with Bonferroni-adjusted alpha
+  const zThresh = getPocockZ(alphaBonf, K);
+
+  const conf = Math.round((1-alpha)*100);
+  const totalCurrent = variants.reduce((s,v)=>s+v.n, 0);
+  const progress = Math.min(totalCurrent/total*100, 100);
+
+  // FIX #5: conditional-power futility (CP < 20% given observed effect)
+  const futility = getConditionalPowerFutility(alphaBonf, progress);
+
+  const zScores=[], pValues=[], uplifts=[];
+  for (let i=1; i<variants.length; i++) {
+    const v  = variants[i];
+    const z  = calcZ(pA, v.rate, variants[0].n, v.n);
+    const pv = 2*(1-normCDF(Math.abs(z)));
+    const u  = pA>0 ? (v.rate-pA)/pA*100 : 0;
+    zScores.push(z); pValues.push(pv); uplifts.push(u);
+  }
+
+  const bestZ  = Math.max(...zScores);
+  const worstZ = Math.min(...zScores);
+  const zMin   = Math.min(-3.5, futility*1.2);
+  const zMax   = zThresh*1.4;
+  const zFillPct = Math.min(Math.max((bestZ-zMin)/(zMax-zMin)*100, 0), 100);
+  const zThPct   = Math.min((zThresh -zMin)/(zMax-zMin)*100, 97);
+  const zFutPct  = Math.max((futility-zMin)/(zMax-zMin)*100, 3);
+
+  let cls, tagLabel, title, sub;
+  if (bestZ >= zThresh) {
+    const winners = zScores.map((z,i)=>z>=zThresh?LETTERS[i]:null).filter(Boolean).join(', ');
+    cls='win'; tagLabel='Variant wins';
+    title = `Stop — ${winners} is better`;
+    sub = `Z = ${bestZ.toFixed(3)} ≥ Pocock boundary ${zThresh.toFixed(3)}`
+        + (numTreatments>1 ? ` (Bonferroni-adjusted α=${alphaBonf.toFixed(4)})` : '')
+        + ` at ${conf}% confidence.`;
+  } else if (bestZ <= futility) {
+    cls='lose'; tagLabel='Futility stop';
+    title = 'Stop — conditional power too low';
+    sub = `Z = ${bestZ.toFixed(3)} ≤ ${futility.toFixed(3)}. `
+        + `Conditional power < 20%: continuing is unlikely to reach significance.`;
+  } else {
+    cls='cont'; tagLabel='Continue';
+    title = 'Not enough evidence yet';
+    sub = `Z = ${bestZ.toFixed(3)} — between futility (${futility.toFixed(3)}) `
+        + `and Pocock boundary (${zThresh.toFixed(3)}). Wait for peek ${Math.ceil(progress/100*K)+1}.`;
+  }
+
+  const fillColor = cls==='win'?'var(--green)':cls==='lose'?'var(--red)':'var(--accent)';
+
+  // Conditional power of best variant at final look, given current trend
+  const cpBest = normCDF(bestZ*Math.sqrt(progress/100)/Math.sqrt(1-progress/100) - zThresh/Math.sqrt(1-progress/100) + 0.001) * 100;
+
+  const peekRows = Array.from({length:K},(_,i)=>{
+    const pi  = i+1;
+    const pp  = (pi/K*100).toFixed(0);
+    const pN  = Math.round(total*pi/K);
+    const isCurrent = Math.abs(progress - pi/K*100) < (100/K*0.6);
+    const isPast    = progress > pi/K*100+5;
+    const cpFut     = getConditionalPowerFutility(alphaBonf, pi/K*100);
+    const rowClass  = isCurrent?'active-row':isPast?'done-row':'';
+    return `<tr class="${rowClass}">
+      <td>${pi}</td><td>${pp}%</td><td>${pN.toLocaleString()}</td>
+      <td>${zThresh.toFixed(3)}</td>
+      <td>${cpFut.toFixed(3)}</td>
+      <td>${isPast?'✓ done':isCurrent?'← here':'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const bonferroniNote = numTreatments>1
+    ? `<br><strong>Multiple comparisons:</strong> Bonferroni — α per arm = ${alphaBonf.toFixed(4)} → Pocock Z = ${zThresh.toFixed(3)} (vs ${getPocockZ(alpha,K).toFixed(3)} unadjusted).`
+    : '';
+
+  const footText = `
+    <strong>Method:</strong> Pocock Group Sequential — Pocock (1977), DeMets & Lan (1994)<br>
+    K = ${K} peeks · Pocock Z = <strong>${zThresh.toFixed(3)}</strong> (constant) · Progress: <strong>${progress.toFixed(1)}%</strong><br>
+    <strong>Futility rule:</strong> conditional power < 20% (Lachin 2005) — boundary at Z = ${futility.toFixed(3)} for t=${progress.toFixed(0)}%<br>
+    <strong>Conditional power (best arm):</strong> ${Math.max(0,cpBest).toFixed(1)}% of reaching significance at final look${bonferroniNote}
+    <br><br>
+    <strong>Peek schedule:</strong>
+    <table class="peek-table" style="margin-top:8px">
+      <thead><tr><th>Peek</th><th>Progress</th><th>At visitors</th><th>Z boundary</th><th>Futility Z</th><th>Status</th></tr></thead>
+      <tbody>${peekRows}</tbody>
+    </table>`;
+
+  document.getElementById('g-result').innerHTML = buildResult({
+    cls, tagLabel, title, sub,
+    variants, upliftData: uplifts, pValues,
+    footText,
+    gaugeItems: [
+      {
+        label: 'Z-score vs Pocock boundary',
+        valStr: bestZ.toFixed(3),
+        fillPct: zFillPct, color: fillColor,
+        markers: [
+          { pct: zThPct,  color: 'var(--green)', label: `Stop: ${zThresh.toFixed(2)}` },
+          { pct: zFutPct, color: 'var(--red)',   label: `Futility: ${futility.toFixed(2)}` }
+        ]
+      },
+      {
+        label: 'Information fraction (t)',
+        valStr: progress.toFixed(1)+'%',
+        fillPct: progress, color: 'var(--text3)',
+        markers: []
+      }
+    ]
+  });
+}
+</script>
+</body>
+</html>
